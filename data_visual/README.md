@@ -1,5 +1,6 @@
-##### 使用Python的matplotlib和plotly库构建的数据可视化项目
-##### 运行方式
+### 使用Python的matplotlib和plotly库构建的数据可视化项目
+
+### 运行方式
 - pip install matplotlib
 - pip install plotly
 - python death_valley_highs_lows.py
