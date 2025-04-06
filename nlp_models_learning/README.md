@@ -16,17 +16,16 @@
 
 **2. 概率计算**
 - **目标**：计算句子`S = w_1, w_2, ..., w_m`的概率：
-  \[
-  P(S) = P(w_1) \cdot P(w_2|w_1) \cdot P(w_3|w_1,w_2) \cdots P(w_m|w_{m-n+1},...,w_{m-1})
-  \]
+
+$$P(S) = P(w_1) \cdot P(w_2|w_1) \cdot P(w_3|w_1,w_2) \cdots P(w_m|w_{m-n+1},...,w_{m-1})$$
+
 - **极大似然估计（MLE）**：
-  \[
-  P(w_t | w_{t-n+1}, ..., w_{t-1}) = \frac{\text{count}(w_{t-n+1}, ..., w_t)}{\text{count}(w_{t-n+1}, ..., w_{t-1})}
-  \]
-  - 例如，计算`P(processing | language)`：
-    \[
-    P(\text{processing} | \text{language}) = \frac{\text{"language processing"的出现次数}}{\text{"language"的出现次数}}
-    \]
+
+$$P(w_t | w_{t-n+1}, ..., w_{t-1}) = \frac{\text{count}(w_{t-n+1}, ..., w_t)}{\text{count}(w_{t-n+1}, ..., w_{t-1})}$$
+
+- **例如，计算`P(processing | language)`**：
+  
+$$P(\text{processing} | \text{language}) = \frac{\text{"language processing"的出现次数}}{\text{"language"的出现次数}}$$
 
 **3. 优缺点分析**
 | **优点**                  | **缺点**                  |
@@ -43,10 +42,10 @@
 **5. 实例演示**
 **句子**："The cat sits on the mat"  
 - **Bigram概率计算**：
-  \[
-  P(\text{sits} | \text{cat}) = \frac{\text{"cat sits"出现次数}}{\text{"cat"出现次数}}
-  \]
-- 若语料中`cat`出现100次，`cat sits`出现30次，则：\[P(\text{sits} | \text{cat}) = 30/100 = 0.3\]
+
+$$P(\text{sits} | \text{cat}) = \frac{\text{"cat sits"出现次数}}{\text{"cat"出现次数}}$$
+
+- 若语料中`cat`出现100次，`cat sits`出现30次，则： $P(\text{sits} | \text{cat}) = 30/100 = 0.3$
 - **Python代码示例(n-gram)**: [`n_gram.py`](./n_gram.py)
 
 
@@ -82,9 +81,8 @@
 **3.2 数学表示**
 - 文本向量维度 = 词典大小（V）
 - 第i个元素的值为对应单词的统计量：
-  \[
-  \text{向量} = [\text{count}(w_1), \text{count}(w_2), ..., \text{count}(w_V)]
-  \]
+
+$$\text{向量} = [\text{count}(w_1), \text{count}(w_2), ..., \text{count}(w_V)]$$
 
 **4. 优缺点分析**
 
@@ -176,16 +174,16 @@
 
 **2.3 隐藏层**
 - **全连接层**：将拼接后的向量映射到隐藏层：
-  \[
-  h = \tanh(W \cdot concat(C(w_{t-1}), ..., C(w_{t-n+1})) + b)
-  \]
+
+$$h = \tanh(W \cdot concat(C(w_{t-1}), ..., C(w_{t-n+1})) + b)$$
+
   其中 `W` 是权重矩阵，`b` 是偏置项。
 
 **2.4 输出层**
 - **Softmax 概率分布**：预测下一个词的概率：
-  \[
-  P(w_t | w_{t-1}, ..., w_{t-n+1}) = \frac{\exp(U \cdot h + c)}{\sum_{k=1}^V \exp(U_k \cdot h + c_k)}
-  \]
+
+$$P(w_t | w_{t-1}, ..., w_{t-n+1}) = \frac{\exp(U \cdot h + c)}{\sum_{k=1}^V \exp(U_k \cdot h + c_k)}$$
+
   其中 `U` 是输出权重矩阵，`c` 是偏置。
 
 
@@ -200,7 +198,7 @@
 - **结构特点**：
   - 时间步间共享参数
   - 隐藏状态传递历史信息
-  - 基础公式：$h_t = \tanh(W_{xh}x_t + W_{hh}h_{t-1} + b_h)$
+  - 基础公式： $h_t = \tanh(W_{xh}x_t + W_{hh}h_{t-1} + b_h)$
 - **优势**：
   - 处理变长序列
   - 捕捉时间依赖性
@@ -213,12 +211,10 @@
   - 引入门控机制（遗忘门、输入门、输出门）
   - 细胞状态长期记忆
   - 核心公式：
-    - 遗忘门：$f_t = \sigma(W_f \cdot [h_{t-1}, x_t] + b_f)$
-    - 输入门：$i_t = \sigma(W_i \cdot [h_{t-1}, x_t] + b_i)$
-    - 候选值：$\tilde{C}_t = \tanh(W_C \cdot [h_{t-1}, x_t] + b_C)$
-    - 细胞状态更新：$C_t = f_t \odot C_{t-1} + i_t \odot \tilde{C}_t$
-    - 输出门：$o_t = \sigma(W_o \cdot [h_{t-1}, x_t] + b_o)$
-    - 最终输出：$h_t = o_t \odot \tanh(C_t)$
+    - 遗忘门： $f_t = \sigma(W_f \cdot [h_{t-1}, x_t] + b_f)$
+    - 输入门： $i_t = \sigma(W_i \cdot [h_{t-1}, x_t] + b_i)$
+    - 输出门： $o_t = \sigma(W_o \cdot [h_{t-1}, x_t] + b_o)$
+    - 最终输出： $h_t = o_t \odot \tanh(C_t)$
 - **优势**：
   - 解决长期依赖问题
   - 梯度流动更稳定
@@ -240,27 +236,30 @@
 **2. 数学原理**
 
 **编码器（Encoder）**
-- 输入序列 $ \mathbf{X} = (x_1, x_2, ..., x_T) $ 经过编码器逐时刻处理，生成隐藏状态序列 $ \{h_1, h_2, ..., h_T\} $，最终取最后一个隐藏状态 $ h_T $ 作为输入序列的​**​全局上下文向量​**​ $ \mathbf{c} $：  
-$$
-h_t = f(x_t, h_{t-1}) 
-$$  
-- $ f $ 表示RNN、LSTM或GRU的迭代计算函数。
+- 输入序列 $\mathbf{X} = (x_1, x_2, ..., x_T)$ 经过编码器逐时刻处理，生成隐藏状态序列 $\{h_1, h_2, ..., h_T\}$，最终取最后一个隐藏状态 $h_T$ 作为输入序列的​**​全局上下文向量​**​ $\mathbf{c}$：
+  
+$$h_t = f(x_t, h_{t-1})$$
+
+- $f$表示RNN、LSTM或GRU的迭代计算函数。
 
 **解码器（Decoder）**
-- 解码器以 $ \mathbf{c} $ 为初始状态，逐步生成输出序列 $ \mathbf{Y} = (y_1, y_2, ..., y_{T'}) $：  
-$$
-s_t = g(y_{t-1}, s_{t-1}, \mathbf{c}),
-\quad P(y_t | y_{<t}, \mathbf{c}) = \text{softmax}(W s_t)
-$$  
-- $ s_t $ 是解码器的隐藏状态，$ g $ 为RNN单元。
+- 解码器以 $\mathbf{c}$ 为初始状态，逐步生成输出序列 $\mathbf{Y} = (y_1, y_2, ..., y_{T'})$ ：
+
+```math
+s_t = g(y_{t-1}, s_{t-1}, \mathbf{c}), \quad P(y_t | y_{1:t-1}, \mathbf{c}) = \text{softmax}(W s_t)
+```
+
+- $s_t$是解码器的隐藏状态，g为RNN单元。
 - 通过条件概率逐词生成输出序列。
 
 **损失函数**
-- 最小化输出序列的负对数似然：  
-$$
-\mathcal{L} = -\sum_{t=1}^{T'} \log P(y_t^* | y_1^*, ..., y_{t-1}^*, \mathbf{c})
-$$  
-- $ y_t^* $ 为真实输出序列的词。
+- 最小化输出序列的负对数似然：
+
+```math
+\mathcal{L} = -\sum_{t=1}^{T'} \log P(y_t^* | y_1^*, \dots, y_{t-1}^*, \mathbf{c})
+```
+
+- $y_t^*$ 为真实输出序列的词。
 
 
 **3. 优缺点分析**
@@ -271,7 +270,7 @@ $$
 3. ​**​通用性强​**​：适用于翻译、生成等多种序列任务。
 
 **缺点**
-1. ​**​信息瓶颈​**​：编码器的上下文向量 $ \mathbf{c} $ 难以完整捕捉长输入序列的信息。
+1. ​**​信息瓶颈​**​：编码器的上下文向量 $\mathbf{c}$ 难以完整捕捉长输入序列的信息。
 2. ​**​误差累积​**​：解码时逐词生成的误差会传播至后续步骤。
 3. ​**​训练耗时​**​：解码阶段无法并行化，长序列生成效率低。
 
@@ -325,12 +324,13 @@ $$
 - 计划采样是一种技术，用于减少曝光偏差，通过在训练过程中逐渐从使用真实目标输出过渡到使用模型的预测。
 
 **实现方式**
-设定一个概率 $p$，表示使用真实标签的概率。
-- 训练初期 $p$ 较高（如0.9），后期逐渐降低（如0.1）。
+设定一个概率 $$p$$，表示使用真实标签的概率。
+- 训练初期 $$p$$ 较高（如0.9），后期逐渐降低（如0.1）。
 
 **公式**
 
-输入 $x_t$ 由以下方式决定：
+输入 $$x_t$$ 由以下方式决定：
+
 $$
 x_t = 
 \begin{cases} 
@@ -338,23 +338,24 @@ y_{t-1} & \text{以概率 } p \\
 \hat{y}_{t-1} & \text{以概率 } 1-p
 \end{cases}
 $$
-其中 $y_{t-1}$ 是真实标签，而 $\hat{y}_{t-1}$ 是模型预测的标签。
+
+其中 $$y_{t-1}$$ 是真实标签，而 $$\hat{y}_{t-1}$$ 是模型预测的标签。
 
 **算法流程**
 
-1. 初始化概率 $p = 1$（完全使用真实标签）。
-2. 每个训练步以概率 $p$ 选择真实词，否则使用模型预测词。
-3. 随着训练轮次增加，线性或指数衰减 $p$。
+1. 初始化概率 $$p = 1$$（完全使用真实标签）。
+2. 每个训练步以概率 $$p$$ 选择真实词，否则使用模型预测词。
+3. 随着训练轮次增加，线性或指数衰减 $$p$$。
 
 - **Python代码示例(Seq2Seq)**: [`seq2seq.py`](./seq2seq.py)
 
 #### Transformer架构模型
 
 **1. 核心思想**
-Transformer是一种**完全基于注意力机制**的序列建模架构，其核心创新在于：
-- **并行计算**：抛弃RNN的时序依赖，实现全序列并行处理
-- **动态上下文建模**：通过自注意力捕捉任意位置词元间的关联
-- **位置感知编码**：显式注入位置信息以弥补注意力机制的位置不敏感性
+- Transformer是一种**完全基于注意力机制**的序列建模架构，其核心创新在于：
+  - **并行计算**：抛弃RNN的时序依赖，实现全序列并行处理
+  - **动态上下文建模**：通过自注意力捕捉任意位置词元间的关联
+  - **位置感知编码**：显式注入位置信息以弥补注意力机制的位置不敏感性
 
 **2. 整体架构**
 ![Transformer架构示意图](./transformer_arch.png)
@@ -367,13 +368,16 @@ Transformer是一种**完全基于注意力机制**的序列建模架构，其�
   $V$: 词表大小，$d$: 嵌入维度
 
 **3.2 位置编码**
-- **绝对位置编码**：通过三角函数注入位置信息  
-  $\begin{aligned}
-  PE_{(pos,2i)} &= \sin(pos/10000^{2i/d}) \\
-  PE_{(pos,2i+1)} &= \cos(pos/10000^{2i/d})
-  \end{aligned}$
-  
-- **最终输入**：$Z = X + PE$
+- **绝对位置编码**：通过三角函数注入位置信息
+
+$$
+\begin{aligned}
+PE\_{(pos,2i)} &= \sin\left(\frac{pos}{10000^{2i/d}}\right) \\
+PE\_{(pos,2i+1)} &= \cos\left(\frac{pos}{10000^{2i/d}}\right)
+\end{aligned}
+$$
+
+- **最终输入**： $Z = X + PE$
 
 **3.3 编码层结构**
 每层包含两个核心子层：
@@ -382,11 +386,13 @@ Transformer是一种**完全基于注意力机制**的序列建模架构，其�
    - 允许并行捕获不同位置的语义关联
 
 2. **前馈网络（FFN）**
-   - 非线性变换增强表示能力  
-   $FFN(x) = \max(0, xW_1 + b_1)W_2 + b_2$
+   - 非线性变换增强表示能力：
 
-3. **残差连接 & 层归一化**  
-   $\text{LayerNorm}(x + \text{Sublayer}(x))$
+  $$FFN(x) = \max(0, xW_1 + b_1)W_2 + b_2$$
+
+3. **残差连接 & 层归一化**
+
+  $$\text{LayerNorm}(x + \text{Sublayer}(x))$$
 
 **4. 解码器结构**
 
@@ -409,19 +415,21 @@ Transformer是一种**完全基于注意力机制**的序列建模架构，其�
 **5. 注意力机制**
 
 **5.1 缩放点积注意力**
-$$
-\text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
-$$
+
+$$\text{Attention}(Q,K,V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+
 - $Q$ (Query)：当前关注焦点
 - $K$ (Key)：待匹配的特征标识
 - $V$ (Value)：实际信息载体
 
 **5.2. 多头注意力**
-- **并行化计算**：将Q/K/V拆分至多个子空间  
-  $\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$
+- **并行化计算**：将Q/K/V拆分至多个子空间
+
+$$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
 
 - **特征融合**：拼接各头结果后线性变换  
-  $\text{MultiHead} = \text{Concat}(\text{head}_1,...,\text{head}_h)W^O$
+
+$$\text{MultiHead} = \text{Concat}(\text{head}_1,...,\text{head}_h)W^Output$$
 
 **6. 位置编码**
 
@@ -436,8 +444,9 @@ $$
 
 
 **7. 损失函数**
-- **交叉熵损失**：最小化预测分布与真实分布的差异  
-  $L = -\sum_{t=1}^T \log P(y_t|y_{<t}, X)$
+- **交叉熵损失**：最小化预测分布与真实分布的差异： 
+
+$$L = (-\sum_{t=1}^T \log P(y_t|y_{1:t-1}, X))$$
 
 **8. 优缺点分析**
 
@@ -447,7 +456,7 @@ $$
 - **多模态适配**：统一处理文本/语音/图像
 
 **缺点**
-- **计算复杂度**：注意力矩阵的$O(n^2)$成本
+- **计算复杂度**：注意力矩阵的 $O(n^2)$ 成本
 - **位置外推**：超越训练长度的序列处理困难
 - **数据依赖**：小数据场景易过拟合
 
