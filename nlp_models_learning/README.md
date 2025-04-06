@@ -446,7 +446,7 @@ $$\text{MultiHead} = \text{Concat}(\text{head}_1,...,\text{head}_h)W^Output$$
 **7. 损失函数**
 - **交叉熵损失**：最小化预测分布与真实分布的差异： 
 
-$$L = (-\sum_{t=1}^T \log P(y_t|y_{1:t-1}, X))$$
+$$L = -\sum_{t=1}^T \log P(y_t|y_{1:t-1}, X)$$
 
 **8. 优缺点分析**
 
