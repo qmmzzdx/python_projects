@@ -429,7 +429,7 @@ $$\text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)$$
 
 - **特征融合**：拼接各头结果后线性变换  
 
-$$\text{MultiHead} = \text{Concat}(\text{head}_1,...,\text{head}_h)W^Output$$
+$$\text{MultiHead} = \text{Concat}(\text{head}_1,...,\text{head}_h)W^{Output}$$
 
 **6. 位置编码**
 
