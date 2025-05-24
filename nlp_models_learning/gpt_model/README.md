@@ -18,8 +18,8 @@ gpt_model/
 │   ├── multihead_attention.py  # 多头注意力模块
 │   └── transformer_block.py    # Transformer 块模块
 └── tests/                      # 测试代码目录
-├── gpt_training.py             # 训练模型的测试
-└── test_gpt_model.py           # GPT 模型的单元测试
+    ├── gpt_training.py         # 训练模型的测试
+    └── test_gpt_model.py       # GPT 模型的单元测试
 ```
 
 ## 项目运行流程
@@ -46,58 +46,65 @@ gpt_model/
 
 每个 Transformer 块由以下几个部分组成：
 
-- **多头注意力机制 (Multi-Head Attention)**：
+**多头注意力机制 (Multi-Head Attention)**：
   - 通过多个注意力头并行计算，模型能够关注输入序列中的不同部分，从而捕捉更丰富的上下文信息。
   - 每个头独立计算注意力权重，使用以下公式：
-    $$
-    \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
-    $$
-    其中 $Q$ 是查询，$K$ 是键，$V$ 是值，$d_k$ 是键的维度。
+
+```math
+\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+```
+  
+  - 其中Q是查询，K是键，V是值， $d_k$ 是键的维度。
   - 最后，将所有头的输出拼接在一起，经过线性变换得到最终的输出。
 
-- **前馈网络 (FeedForward Network)**：
-  - 在每个 Transformer 块中，经过注意力机制的输出会传递到前馈网络。前馈网络通常由两个线性层和一个激活函数（如 GELU）组成，公式如下：
-    $$
-    \text{FFN}(x) = \text{GeLU}(xW_1 + b_1)W_2 + b_2
-    $$
+**前馈网络 (FeedForward Network)**：
   - 该网络负责对每个位置的表示进行非线性变换，增强模型的表达能力。
+  - 在每个 Transformer 块中，经过注意力机制的输出会传递到前馈网络。前馈网络通常由两个线性层和一个激活函数（如 GELU）组成，公式如下：
 
-- **层归一化 (Layer Normalization)**：
+```math
+\text{FFN}(x) = \text{GeLU}(xW_1 + b_1)W_2 + b_2
+```
+
+**层归一化 (Layer Normalization)**：
   - 在每个子层（注意力和前馈网络）之后，应用层归一化以稳定训练过程，减少内部协变量偏移。层归一化的公式为：
-    $$
-    \text{LayerNorm}(x) = \frac{x - \mu}{\sigma} \cdot \gamma + \beta
-    $$
-    其中 $\mu$ 和 $\sigma$ 分别是均值和标准差，$\gamma$ 和 $\beta$ 是可学习的参数。
 
-- **残差连接 (Residual Connection)**：
+```math
+    \text{LayerNorm}(x) = \frac{x - \mu}{\sigma} \cdot \gamma + \beta
+```
+  - 其中 $\mu$ 和 $\sigma$ 分别是均值和标准差， $\gamma$ 和 $\beta$ 是可学习的参数。
+
+**残差连接 (Residual Connection)**：
   - 在每个子层的输出与输入之间添加残差连接，帮助模型更好地学习和训练。公式为：
-    $$
+
+```math
     \text{Output} = \text{LayerNorm}(x + \text{Sublayer}(x))
-    $$
+```
 
 ### 3. 输出层 (Output Layer)
 
-- **线性层**：将 Transformer 块的输出映射到词汇表大小的概率分布，模型通过 softmax 函数生成每个词汇的预测概率：
-  $$
-  P(x_t | x_{<t}) = \text{softmax}(W_{out}h_t)
-  $$
-  其中 $h_t$ 是当前时间步的隐藏状态，$W_{out}$ 是输出权重矩阵。
+**线性层**：将 Transformer 块的输出映射到词汇表大小的概率分布，模型通过 softmax 函数生成每个词汇的预测概率：
+
+```math
+  P(x_t | x_{1:t-1}) = \text{softmax}(W_{out}h_t)
+```
+
+  - 其中 $h_t$ 是当前时间步的隐藏状态， $W_{out}$ 是输出权重矩阵。
 
 ## 训练策略
 
 ### 1. 学习率调度
 
-- **学习率预热 (Learning Rate Warmup)**：在训练的初期，逐渐增加学习率，以避免模型在初始阶段的震荡。通常在前几个 epoch 中逐步增加学习率，达到设定的最大值后再进行衰减。具体实现中，学习率在前 N 个步骤内线性增加，公式为：
-  $$
+**学习率预热 (Learning Rate Warmup)**：在训练的初期，逐渐增加学习率，以避免模型在初始阶段的震荡。通常在前几个 epoch 中逐步增加学习率，达到设定的最大值后再进行衰减。具体实现中，学习率在前 N 个步骤内线性增加，公式为：
+```math
   \text{lr}(t) = \frac{t}{N} \cdot \text{lr}_{max}
-  $$
-  其中 $t$ 是当前步骤，$N$ 是预热的步骤数，$\text{lr}_{max}$ 是最大学习率。
+```
+  - 其中 $t$ 是当前步骤， $N$ 是预热的步骤数， $\text{lr}_{max}$ 是最大学习率。
 
-- **余弦衰减 (Cosine Decay)**：在训练过程中，随着 epoch 的增加，逐渐降低学习率，以帮助模型在接近收敛时更精细地调整参数。余弦衰减的公式为：
-  $$
+**余弦衰减 (Cosine Decay)**：在训练过程中，随着 epoch 的增加，逐渐降低学习率，以帮助模型在接近收敛时更精细地调整参数。余弦衰减的公式为：
+```math
   \text{lr}(t) = \frac{1}{2} \left(1 + \cos\left(\frac{t}{T} \pi\right)\right) \cdot \text{lr}_{max}
-  $$
-  其中 $T$ 是总的训练步骤数。
+```
+  - 其中 $T$ 是总的训练步骤数。
 
 ### 2. 批量大小 (Batch Size)
 
@@ -105,20 +112,45 @@ gpt_model/
 
 ### 3. 正则化 (Regularization)
 
-- **Dropout**：在前馈网络和注意力层中使用 Dropout 技术，以减少过拟合。通过随机丢弃一定比例的神经元，增强模型的泛化能力。通常设置为 0.1 到 0.3 之间。
-- **权重衰减 (Weight Decay)**：在损失函数中添加 L2 正则化项，以防止模型过拟合。损失函数的形式为：
-  $$
+**Dropout**：在前馈网络和注意力层中使用 Dropout 技术，以减少过拟合。通过随机丢弃一定比例的神经元，增强模型的泛化能力。通常设置为 0.1 到 0.3 之间。
+
+**权重衰减 (Weight Decay)**：在损失函数中添加 L2 正则化项，以防止模型过拟合。损失函数的形式为：
+```math
   L = L_{original} + \lambda \sum_{i} w_i^2
-  $$
-  其中 $L_{original}$ 是原始损失，$\lambda$ 是正则化强度，$w_i$ 是模型的权重。
+```
+  - 其中 $L_{original}$ 是原始损失， $\lambda$ 是正则化强度， $w_i$ 是模型的权重。
 
 ### 4. 梯度裁剪 (Gradient Clipping)
 
-- 为了防止梯度爆炸，通常在训练过程中会使用梯度裁剪。具体实现是将梯度的 L2 范数限制在一个阈值之内，公式为：
-  $$
-  \text{if } \|\nabla L\| > \text{threshold} \text{ then } \nabla L \leftarrow \frac{\nabla L}{\|\nabla L\|} \cdot \text{threshold}
-  $$
-  其中 $\nabla L$ 是损失函数的梯度，threshold 是设定的阈值。
+梯度裁剪是一种防止梯度爆炸（Gradient Explosion）的技术，在训练深度学习模型（如GPT）时，梯度可能会变得非常大，导致模型参数更新不稳定，甚至无法收敛。梯度裁剪的作用就是限制梯度的大小，使其不超过某个设定的阈值（threshold）
+
+梯度裁剪的公式（L2范数裁剪）
+  - 计算梯度的L2范数（长度）：
+
+```math
+   \text{grad\_norm} = \sqrt{\sum_{i} g_i^2}
+```
+  - $g_i$ 是梯度的每个分量（每个参数的梯度）。
+
+梯度裁剪（Gradient Clipping）公式的简单解释：计算所有梯度的平方和，再开平方，得到梯度的总长度。
+
+**判断是否裁剪**：
+  - 如果 grad_norm > threshold，说明梯度太大，需要裁剪。
+  - 如果 grad_norm ≤ threshold，梯度正常，不需要裁剪。
+
+**裁剪方法**：
+
+如果梯度太大，就按比例缩小梯度，使其长度等于 threshold：
+
+```math
+\text{clipped\_grad} = \frac{\text{threshold}}{\text{grad\_norm}} \cdot \text{grad}
+```
+这样，裁剪后的梯度长度就是 threshold，不会过大。
+
+**梯度裁剪的作用**：
+  - 防止梯度爆炸：特别是在RNN、LSTM、Transformer等模型中，梯度可能会变得非常大，导致训练失败。
+  - 稳定训练：让梯度保持在一个合理的范围内，避免参数更新过大或过小。
+  - 提高收敛性：避免模型因梯度爆炸而无法收敛。
 
 ### 5. 训练过程监控
 
@@ -131,11 +163,10 @@ gpt_model/
 - **生成策略**：在生成文本时，可以使用不同的策略，如贪婪搜索、随机采样、温度采样和 top-k 采样等。
   - **贪婪搜索**：每一步选择概率最高的词汇，生成的文本可能缺乏多样性。
   - **随机采样**：根据预测的概率分布随机选择下一个词汇，生成的文本更加多样化。
-  - **温度采样**：通过调整温度参数来控制生成文本的多样性。较高的温度会导致更随机的选择，较低的温度则会使选择更集中。温度的公式为：
-    $$
-    P(x) = \frac{e^{\frac{log(P(x))}{T}}}{\sum_{i} e^{\frac{log(P(x_i))}{T}}}
-    $$
-    其中 $T$ 是温度参数。
+  - **温度采样**：通过调整温度参数来控制生成文本的多样性。较高的温度会导致更随机的选择，较低的温度则会使选择更集中。温度的公式如下，其中 $T$ 是温度参数：
+```math
+P(x) = \frac{e^{\frac{log(P(x))}{T}}}{\sum_{i} e^{\frac{log(P(x_i))}{T}}}
+```
   - **Top-k 采样**：在每一步中，仅考虑概率最高的 k 个词汇进行采样，避免低概率词汇的影响。
 
 ### 2. 输出格式
