@@ -41,7 +41,7 @@ gpt_model/
 
 - **词嵌入 (Token Embedding)**：使用 `nn.Embedding` 类将输入的词汇 ID 转换为对应的嵌入向量。每个词汇都有一个对应的向量表示，模型通过这些向量来理解词汇的语义。
 - **位置嵌入 (Positional Embedding)**：由于 Transformer 模型不具备序列信息，位置嵌入用于为每个词汇提供位置信息。位置嵌入通过正弦和余弦函数生成，确保模型能够理解词汇在句子中的顺序。
-- src/gpt_model.py中的嵌入层相关代码：
+- `src/gpt_model.py`中的嵌入层相关代码：
     ```python
     # 初始化词嵌入层
     self.tok_emb = nn.Embedding(cfg["vocab_size"], cfg["emb_dim"])
@@ -63,7 +63,7 @@ gpt_model/
 
 ### 2. Transformer 块 (Transformer Block)
 
-每个 Transformer 块由以下几个部分组成，完整 Block 块可查看src/transformer_block.py：
+每个 Transformer 块由以下几个部分组成，完整 Block 块可查看`src/transformer_block.py`：
 
 **多头注意力机制 (Multi-Head Attention)**：
   - 通过多个注意力头并行计算，模型能够关注输入序列中的不同部分，从而捕捉更丰富的上下文信息。
@@ -75,7 +75,7 @@ gpt_model/
   
   - 其中Q是查询，K是键，V是值， $d_k$ 是键的维度。
   - 最后，将所有头的输出拼接在一起，经过线性变换得到最终的输出。
-  - 详情可查看src/multihead_attention.py
+  - 详情可查看`src/multihead_attention.py`
 
 **前馈网络 (FeedForward Network)**：
   - 该网络负责对每个位置的表示进行非线性变换，增强模型的表达能力。
@@ -85,7 +85,7 @@ gpt_model/
 \text{FFN}(x) = \text{GeLU}(xW_1 + b_1)W_2 + b_2
 ```
 
-  - 详情可查看src/FeedForward.py
+  - 详情可查看`src/FeedForward.py`
 
 **层归一化 (Layer Normalization)**：
   - 在每个子层（注意力和前馈网络）之后，应用层归一化以稳定训练过程，减少内部协变量偏移。层归一化的公式为：
@@ -94,7 +94,7 @@ gpt_model/
     \text{LayerNorm}(x) = \frac{x - \mu}{\sigma} \cdot \gamma + \beta
 ```
   - 其中 $\mu$ 和 $\sigma$ 分别是均值和标准差， $\gamma$ 和 $\beta$ 是可学习的参数。
-  - 详情可查看src/layernorm.py
+  - 详情可查看`src/layernorm.py`
 
 **残差连接 (Residual Connection)**：
   - 在每个子层的输出与输入之间添加残差连接，帮助模型更好地学习和训练。公式为：
@@ -102,7 +102,7 @@ gpt_model/
 ```math
     \text{Output} = \text{LayerNorm}(x + \text{Sublayer}(x))
 ```
-  - src/transformer_block.py中的残差连接相关代码：
+  - `src/transformer_block.py`中的残差连接相关代码：
     ```python
     # 残差连接1: 注意力机制
     shortcut = x
@@ -128,7 +128,7 @@ gpt_model/
 ```
 
   - 其中 $h_t$ 是当前时间步的隐藏状态， $W_{out}$ 是输出权重矩阵。
-  - src/gpt_model.py中输出层相关代码：
+  - `src/gpt_model.py`中输出层相关代码：
     ```python
     # 应用Dropout
     x = self.drop_emb(x)
@@ -150,7 +150,7 @@ gpt_model/
   \text{lr}(t) = \frac{t}{N} \cdot \text{lr}_{max}
 ```
   - 其中 $t$ 是当前步骤， $N$ 是预热的步骤数， $\text{lr}_{max}$ 是最大学习率。
-  - tests/gpt_training.py中学习率预热相关代码：
+  - `tests/gpt_training.py`中学习率预热相关代码：
     ```python
     peak_lr = optimizer.param_groups[0]["lr"]             # 获取最大学习率
     total_training_steps = len(train_loader) * n_epochs   # 计算总训练步数
@@ -170,7 +170,7 @@ gpt_model/
   - $t$ ：当前训练步数（ 0 $\leq t$ $\leq T$ ）。
   - $\eta_{\text{min}}$ ：最小学习率（通常设为0或接近0）。
   - $\eta_{\text{max}}$ ：初始学习率（最大值）。
-  - tests/gpt_training.py中余弦衰减相关代码：
+  - `tests/gpt_training.py`中余弦衰减相关代码：
     ```python
     progress = ((global_step - warmup_steps) / (total_training_steps - warmup_steps))
     lr = min_lr + (peak_lr - min_lr) * 0.5 * (1 + math.cos(math.pi * progress))
@@ -185,7 +185,7 @@ gpt_model/
    \text{grad\_norm} = \sqrt{\sum_{i} g_i^2}
 ```
   - $g_i$ 是梯度的每个分量（每个参数的梯度）。
-  - tests/gpt_training.py中梯度裁剪相关代码：
+  - `tests/gpt_training.py`中梯度裁剪相关代码：
     ```python
     if global_step >= warmup_steps:     # 预热阶段后应用梯度裁剪
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
@@ -241,11 +241,11 @@ gpt_model/
 P(x) = \frac{e^{\frac{log(P(x))}{T}}}{\sum_{i} e^{\frac{log(P(x_i))}{T}}}
 ```
   - **Top-k 采样**：在每一步中，仅考虑概率最高的 k 个词汇进行采样，避免低概率词汇的影响。
-  - 具体策略实现可查看src/generate_text.py中的代码
+  - 具体策略实现可查看`src/generate_text.py`中的代码
 
 ### 2. 输出格式
 
-- 生成的文本将以字符串形式返回，用户可以根据需要进行后续处理或直接输出到文件中。
+- 生成的文本将以字符串形式返回，可以根据需要进行后续处理或直接输出到文件中。
 
 ## 项目运行流程
 
@@ -259,7 +259,7 @@ P(x) = \frac{e^{\frac{log(P(x))}{T}}}{\sum_{i} e^{\frac{log(P(x_i))}{T}}}
 
 ### 3. 训练模型
 
-- tests/gpt_training.py中调用 `train_model` 函数进行模型训练。
+- `tests/gpt_training.py`中调用 `train_model` 函数进行模型训练。
 
 - 训练过程中，模型将读取 `the-verdict.txt` 文件中的数据，进行训练并输出训练损失和验证损失。
 
