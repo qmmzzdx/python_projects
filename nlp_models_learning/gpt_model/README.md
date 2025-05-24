@@ -1,6 +1,6 @@
 # GPT2-124M LLM
 
-这是一个基于 Transformer 架构的 GPT2-124M 模型实现，旨在提供一个可训练的文本生成模型。该项目实现了文本生成的核心功能，支持多种配置的 GPT2 模型。
+一个基于 Transformer 架构的 GPT2-124M 模型实现，旨在提供一个本地复现可训练的文本生成模型。主要实现了文本生成的核心功能，支持多种配置的 GPT2 模型。
 
 ## 项目结构
 
@@ -41,10 +41,29 @@ gpt_model/
 
 - **词嵌入 (Token Embedding)**：使用 `nn.Embedding` 类将输入的词汇 ID 转换为对应的嵌入向量。每个词汇都有一个对应的向量表示，模型通过这些向量来理解词汇的语义。
 - **位置嵌入 (Positional Embedding)**：由于 Transformer 模型不具备序列信息，位置嵌入用于为每个词汇提供位置信息。位置嵌入通过正弦和余弦函数生成，确保模型能够理解词汇在句子中的顺序。
+- src/gpt_model.py中的嵌入层相关代码：
+    ```python
+    # 初始化词嵌入层
+    self.tok_emb = nn.Embedding(cfg["vocab_size"], cfg["emb_dim"])
+    # 初始化位置嵌入层
+    self.pos_emb = nn.Embedding(cfg["context_length"], cfg["emb_dim"])
+    ......
+    ......
+    ......
+    # 获取词嵌入
+    # Shape: (batch_size, num_tokens, emb_dim)
+    tok_embeds = self.tok_emb(in_idx)
+    # 获取位置嵌入
+    # Shape: (num_tokens, emb_dim)
+    pos_embeds = self.pos_emb(torch.arange(
+        in_idx.size(1), device=in_idx.device))
+    # 将词嵌入和位置嵌入相加
+    x = tok_embeds + pos_embeds  # Shape: (batch_size, num_tokens, emb_dim)
+    ```
 
 ### 2. Transformer 块 (Transformer Block)
 
-每个 Transformer 块由以下几个部分组成：
+每个 Transformer 块由以下几个部分组成，完整 Block 块可查看src/transformer_block.py：
 
 **多头注意力机制 (Multi-Head Attention)**：
   - 通过多个注意力头并行计算，模型能够关注输入序列中的不同部分，从而捕捉更丰富的上下文信息。
@@ -56,6 +75,7 @@ gpt_model/
   
   - 其中Q是查询，K是键，V是值， $d_k$ 是键的维度。
   - 最后，将所有头的输出拼接在一起，经过线性变换得到最终的输出。
+  - 详情可查看src/multihead_attention.py
 
 **前馈网络 (FeedForward Network)**：
   - 该网络负责对每个位置的表示进行非线性变换，增强模型的表达能力。
@@ -65,6 +85,8 @@ gpt_model/
 \text{FFN}(x) = \text{GeLU}(xW_1 + b_1)W_2 + b_2
 ```
 
+  - 详情可查看src/FeedForward.py
+
 **层归一化 (Layer Normalization)**：
   - 在每个子层（注意力和前馈网络）之后，应用层归一化以稳定训练过程，减少内部协变量偏移。层归一化的公式为：
 
@@ -72,6 +94,7 @@ gpt_model/
     \text{LayerNorm}(x) = \frac{x - \mu}{\sigma} \cdot \gamma + \beta
 ```
   - 其中 $\mu$ 和 $\sigma$ 分别是均值和标准差， $\gamma$ 和 $\beta$ 是可学习的参数。
+  - 详情可查看src/layernorm.py
 
 **残差连接 (Residual Connection)**：
   - 在每个子层的输出与输入之间添加残差连接，帮助模型更好地学习和训练。公式为：
@@ -79,6 +102,22 @@ gpt_model/
 ```math
     \text{Output} = \text{LayerNorm}(x + \text{Sublayer}(x))
 ```
+  - src/transformer_block.py中的残差连接相关代码：
+    ```python
+    # 残差连接1: 注意力机制
+    shortcut = x
+    x = self.norm1(x)          # 层归一化
+    x = self.att(x)            # 多头注意力
+    x = self.drop_shortcut(x)  # Dropout
+    x = x + shortcut           # 残差连接
+
+    # 残差连接2: 前馈网络
+    shortcut = x
+    x = self.norm2(x)          # 层归一化
+    x = self.ff(x)             # 前馈网络
+    x = self.drop_shortcut(x)  # Dropout
+    x = x + shortcut           # 残差连接
+    ```
 
 ### 3. 输出层 (Output Layer)
 
@@ -89,6 +128,18 @@ gpt_model/
 ```
 
   - 其中 $h_t$ 是当前时间步的隐藏状态， $W_{out}$ 是输出权重矩阵。
+  - src/gpt_model.py中输出层相关代码：
+    ```python
+    # 应用Dropout
+    x = self.drop_emb(x)
+    # 通过Transformer块
+    x = self.trf_blocks(x)
+    # 应用最终的层归一化
+    x = self.final_norm(x)
+    # 通过输出头, 得到对数概率分布
+    # Shape: (batch_size, num_tokens, vocab_size)
+    logits = self.out_head(x)
+    ```
 
 ## 训练策略
 
@@ -99,12 +150,23 @@ gpt_model/
   \text{lr}(t) = \frac{t}{N} \cdot \text{lr}_{max}
 ```
   - 其中 $t$ 是当前步骤， $N$ 是预热的步骤数， $\text{lr}_{max}$ 是最大学习率。
+  - tests/gpt_training.py中学习率预热相关代码：
+    ```python
+    peak_lr = optimizer.param_groups[0]["lr"]             # 获取最大学习率
+    total_training_steps = len(train_loader) * n_epochs   # 计算总训练步数
+    lr_increment = (peak_lr - initial_lr) / warmup_steps  # 计算学习率增量
+    ```
 
 **余弦衰减 (Cosine Decay)**：在训练过程中，随着 epoch 的增加，逐渐降低学习率，以帮助模型在接近收敛时更精细地调整参数。余弦衰减的公式为：
 ```math
   \text{lr}(t) = \frac{1}{2} \left(1 + \cos\left(\frac{t}{T} \pi\right)\right) \cdot \text{lr}_{max}
 ```
   - 其中 $T$ 是总的训练步骤数。
+  - tests/gpt_training.py中余弦衰减相关代码：
+    ```python
+    progress = ((global_step - warmup_steps) / (total_training_steps - warmup_steps))
+    lr = min_lr + (peak_lr - min_lr) * 0.5 * (1 + math.cos(math.pi * progress))
+    ```
 
 ### 2. 批量大小 (Batch Size)
 
@@ -131,6 +193,11 @@ gpt_model/
    \text{grad\_norm} = \sqrt{\sum_{i} g_i^2}
 ```
   - $g_i$ 是梯度的每个分量（每个参数的梯度）。
+  - tests/gpt_training.py中梯度裁剪相关代码：
+    ```python
+    if global_step >= warmup_steps:     # 预热阶段后应用梯度裁剪
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+    ```
 
 梯度裁剪（Gradient Clipping）公式的简单解释：计算所有梯度的平方和，再开平方，得到梯度的总长度。
 
@@ -168,6 +235,7 @@ gpt_model/
 P(x) = \frac{e^{\frac{log(P(x))}{T}}}{\sum_{i} e^{\frac{log(P(x_i))}{T}}}
 ```
   - **Top-k 采样**：在每一步中，仅考虑概率最高的 k 个词汇进行采样，避免低概率词汇的影响。
+  - 具体策略实现可查看src/generate_text.py中的代码
 
 ### 2. 输出格式
 
@@ -185,13 +253,13 @@ P(x) = \frac{e^{\frac{log(P(x))}{T}}}{\sum_{i} e^{\frac{log(P(x_i))}{T}}}
 
 ### 3. 训练模型
 
-- gpt_training.py中调用 `train_model` 函数进行模型训练。
+- tests/gpt_training.py中调用 `train_model` 函数进行模型训练。
 
 - 训练过程中，模型将读取 `the-verdict.txt` 文件中的数据，进行训练并输出训练损失和验证损失。
 
 ### 4. 生成文本
 
-- 训练完成后，使用 `src/generate_text.py` 中的 `generate_text` 函数，根据训练好的模型生成文本。可以在 `gpt_training.py` 中设置生成文本的起始上下文。
+- 训练完成后，使用 `src/generate_text.py` 中的 `generate_text` 函数，根据训练好的模型生成文本。可以在 `tests/gpt_training.py` 中设置生成文本的起始上下文。
 
 ### 5. 查看结果
 
