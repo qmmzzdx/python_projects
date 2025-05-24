@@ -1,6 +1,6 @@
 # GPT2-124M LLM
 
-这是一个基于 Transformer 架构的 GPT2-124M 模型实现，旨在提供一个可训练的文本生成模型。该项目实现了文本生成的核心功能，支持多种配置的 GPT 模型。
+这是一个基于 Transformer 架构的 GPT2-124M 模型实现，旨在提供一个可训练的文本生成模型。该项目实现了文本生成的核心功能，支持多种配置的 GPT2 模型。
 
 ## 项目结构
 
@@ -185,15 +185,13 @@ P(x) = \frac{e^{\frac{log(P(x))}{T}}}{\sum_{i} e^{\frac{log(P(x_i))}{T}}}
 
 ### 3. 训练模型
 
-- 运行以下命令以调用 `train_model` 函数进行模型训练：
-
-python tests/gpt_training.py
+- gpt_training.py中调用 `train_model` 函数进行模型训练。
 
 - 训练过程中，模型将读取 `the-verdict.txt` 文件中的数据，进行训练并输出训练损失和验证损失。
 
 ### 4. 生成文本
 
-- 训练完成后，您可以使用 `src/generate_text.py` 中的 `generate_text` 函数，根据训练好的模型生成文本。您可以在 `gpt_training.py` 中设置生成文本的起始上下文。
+- 训练完成后，使用 `src/generate_text.py` 中的 `generate_text` 函数，根据训练好的模型生成文本。您可以在 `gpt_training.py` 中设置生成文本的起始上下文。
 
 ### 5. 查看结果
 
