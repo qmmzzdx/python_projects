@@ -157,34 +157,26 @@ gpt_model/
     lr_increment = (peak_lr - initial_lr) / warmup_steps  # 计算学习率增量
     ```
 
-**余弦衰减 (Cosine Decay)**：在训练过程中，随着 epoch 的增加，逐渐降低学习率，以帮助模型在接近收敛时更精细地调整参数。余弦衰减的公式为：
+**余弦衰减 (Cosine Decay)**：一种平滑降低学习率的策略，让学习率从初始值逐渐下降到最小值，以帮助模型在接近收敛时更精细地调整参数，变化曲线像余弦函数的一半周期（从0到π）。
+**核心思想**：
+  - 训练初期：用较大的学习率快速收敛。  
+  - 训练后期：用较小的学习率精细调整参数，避免震荡。
+  - 比线性衰减更平滑，能更好地逼近最优解。  
+  - 具体公式：
 ```math
-  \text{lr}(t) = \frac{1}{2} \left(1 + \cos\left(\frac{t}{T} \pi\right)\right) \cdot \text{lr}_{max}
+\eta_t = \eta_{\text{min}} + \frac{1}{2}(\eta_{\text{max}} - \eta_{\text{min}}) \left(1 + \cos\left(\frac{t}{T} \pi\right)\right)
 ```
-  - 其中 $T$ 是总的训练步骤数。
+  - $T$ ：总训练步数（从最大学习率衰减到最小学习率的步数）。
+  - $t$ ：当前训练步数（ 0 $\leq t$ $\leq T$ ）。
+  - $\eta_{\text{min}}$ ：最小学习率（通常设为0或接近0）。
+  - $\eta_{\text{max}}$ ：初始学习率（最大值）。
   - tests/gpt_training.py中余弦衰减相关代码：
     ```python
     progress = ((global_step - warmup_steps) / (total_training_steps - warmup_steps))
     lr = min_lr + (peak_lr - min_lr) * 0.5 * (1 + math.cos(math.pi * progress))
     ```
 
-### 2. 批量大小 (Batch Size)
-
-- 选择合适的批量大小以平衡训练速度和内存使用。较大的批量大小可以加速训练，但可能会导致内存不足。通常在训练过程中会进行实验以找到最佳的批量大小。
-
-### 3. 正则化 (Regularization)
-
-**Dropout**：在前馈网络和注意力层中使用 Dropout 技术，以减少过拟合。通过随机丢弃一定比例的神经元，增强模型的泛化能力。通常设置为 0.1 到 0.3 之间。
-
-**权重衰减 (Weight Decay)**：在损失函数中添加 L2 正则化项，以防止模型过拟合。损失函数的形式为：
-```math
-  L = L_{original} + \lambda \sum_{i} w_i^2
-```
-  - 其中 $L_{original}$ 是原始损失， $\lambda$ 是正则化强度， $w_i$ 是模型的权重。
-
-### 4. 梯度裁剪 (Gradient Clipping)
-
-梯度裁剪是一种防止梯度爆炸（Gradient Explosion）的技术，在训练深度学习模型（如GPT）时，梯度可能会变得非常大，导致模型参数更新不稳定，甚至无法收敛。梯度裁剪的作用就是限制梯度的大小，使其不超过某个设定的阈值（threshold）
+**梯度裁剪 (Gradient Clipping)**：一种防止梯度爆炸（Gradient Explosion）的技术，在训练深度学习模型（如GPT）时，梯度可能会变得非常大，导致模型参数更新不稳定，甚至无法收敛。梯度裁剪的作用就是限制梯度的大小，使其不超过某个设定的阈值（threshold）
 
 梯度裁剪的公式（L2范数裁剪）
   - 计算梯度的L2范数（长度）：
@@ -219,7 +211,21 @@ gpt_model/
   - 稳定训练：让梯度保持在一个合理的范围内，避免参数更新过大或过小。
   - 提高收敛性：避免模型因梯度爆炸而无法收敛。
 
-### 5. 训练过程监控
+### 2. 批量大小 (Batch Size)
+
+- 选择合适的批量大小以平衡训练速度和内存使用。较大的批量大小可以加速训练，但可能会导致内存不足。通常在训练过程中会进行实验以找到最佳的批量大小。
+
+### 3. 正则化 (Regularization)
+
+**Dropout**：在前馈网络和注意力层中使用 Dropout 技术，以减少过拟合。通过随机丢弃一定比例的神经元，增强模型的泛化能力。通常设置为 0.1 到 0.3 之间。
+
+**权重衰减 (Weight Decay)**：在损失函数中添加 L2 正则化项，以防止模型过拟合。损失函数的形式为：
+```math
+  L = L_{original} + \lambda \sum_{i} w_i^2
+```
+  - 其中 $L_{original}$ 是原始损失， $\lambda$ 是正则化强度， $w_i$ 是模型的权重。
+
+### 4. 训练过程监控
 
 - 在训练过程中，定期评估模型在验证集上的性能，监控训练损失和验证损失，以便及时调整训练策略。
 
